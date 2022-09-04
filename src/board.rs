@@ -12,20 +12,20 @@ impl BoardPlugin {
 impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(self.settings.clone());
-        app.insert_resource(MouseGridCoord::default());
+        app.insert_resource(MouseHoverCoord::default());
         app.add_system_set(SystemSet::on_enter(AppState::WorldGen).with_system(generate_boards));
         app.add_system_set(
-            SystemSet::on_update(AppState::WorldGen).with_system(exist_generation_state),
+            SystemSet::on_update(AppState::WorldGen).with_system(exit_generation_state),
         );
 
         app.add_system_set(
-            SystemSet::on_update(AppState::InGame).with_system(update_camera_grid_position),
+            SystemSet::on_update(AppState::InGame).with_system(update_mouse_hover_coord),
         );
 
         #[cfg(debug_assertions)]
         app.add_system_set(
             SystemSet::on_update(AppState::InGame)
-                .with_system(debug_mouse_grid_coord)
+                .with_system(debug_mouse_hover_coord)
                 .with_system(debug_unit_board_cells)
                 .with_system(debug_keep_board_cells),
         );
@@ -39,7 +39,7 @@ pub struct KeepCell;
 pub struct UnitCell;
 
 #[derive(Default, Debug, Clone)]
-pub struct MouseGridCoord {
+pub struct MouseHoverCoord {
     pub coord: GridCoord,
     pub mouse_pos: Vec3,
 }
@@ -52,7 +52,7 @@ pub struct BoardSettings {
 }
 
 impl BoardSettings {
-    pub fn keep_board_origin(&self, grid: &Grid) -> Vec3 {
+    pub fn unit_board_offset_end(&self, grid: &Grid) -> Vec3 {
         self.offset + self.unit_board.1 as f32 * grid.cell_size as f32 * Vec3::Z
     }
 }
@@ -76,11 +76,11 @@ fn generate_boards(mut cmd: Commands, mut grid: ResMut<Grid>, board_settings: Re
         }
     }
 
-    let keep_board_offset = board_settings.keep_board_origin(&grid);
+    let offset = board_settings.unit_board_offset_end(&grid);
     for x in 0..board_settings.keep_board.0 {
         for y in 0..board_settings.keep_board.1 {
             let local_coord = GridCoord::new(x, y);
-            let pos = keep_board_offset + grid.to_world(local_coord);
+            let pos = offset + grid.to_world(local_coord);
             let cell = cmd
                 .spawn_bundle(TransformBundle {
                     local: Transform::from_translation(pos),
@@ -96,11 +96,11 @@ fn generate_boards(mut cmd: Commands, mut grid: ResMut<Grid>, board_settings: Re
     }
 }
 
-fn exist_generation_state(mut app_state: ResMut<State<AppState>>) {
+fn exit_generation_state(mut app_state: ResMut<State<AppState>>) {
     app_state.set(AppState::InGame).unwrap();
 }
 
-fn update_camera_grid_position(
+fn update_mouse_hover_coord(
     mut cmds: Commands,
     windows: Res<Windows>,
     cameras: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
@@ -130,7 +130,7 @@ fn update_camera_grid_position(
             );
         }
 
-        cmds.insert_resource(MouseGridCoord {
+        cmds.insert_resource(MouseHoverCoord {
             coord,
             mouse_pos: point,
         });
@@ -159,9 +159,9 @@ pub fn ray_from_mouse_position(
     (near, dir)
 }
 
-fn debug_mouse_grid_coord(
+fn debug_mouse_hover_coord(
     mut lines: ResMut<DebugLines>,
-    mouse_grid_coord: Res<MouseGridCoord>,
+    mouse_grid_coord: Res<MouseHoverCoord>,
     grid: Res<Grid>,
 ) {
     let pos = grid.to_world(mouse_grid_coord.coord);
