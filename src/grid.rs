@@ -100,6 +100,10 @@ impl Grid {
             self.associations.insert(entity, coord);
         }
     }
+
+    pub fn in_bounds(&self, coord: GridCoord) -> bool {
+        self.storage.contains_key(&coord)
+    }
 }
 
 fn grid_entity_update_system(

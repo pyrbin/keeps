@@ -120,14 +120,6 @@ fn update_mouse_hover_coord(
         #[cfg(debug_assertions)]
         {
             lines.circle(point, Quat::IDENTITY, 0.1, 0.0, Color::YELLOW);
-            lines.circle(grid.to_world(coord), Quat::IDENTITY, 0.1, 0.0, Color::PINK);
-            lines.circle(
-                Vec3::new(coord.x as f32, 0.0, coord.y as f32),
-                Quat::IDENTITY,
-                0.1,
-                0.0,
-                Color::BLUE,
-            );
         }
 
         cmds.insert_resource(MouseHoverCoord {
@@ -166,7 +158,14 @@ fn debug_mouse_hover_coord(
 ) {
     let pos = grid.to_world(mouse_grid_coord.coord);
     let size = grid.cell_size as f32 * 0.7;
-    lines.square(pos, size, 0.0, Color::GOLD);
+
+    let color = if grid.in_bounds(mouse_grid_coord.coord) {
+        Color::GREEN
+    } else {
+        Color::RED
+    };
+
+    lines.square(pos, size, 0.0, color);
 }
 
 fn debug_unit_board_cells(
@@ -189,6 +188,6 @@ fn debug_keep_board_cells(
     for transform in query.iter() {
         let pos = transform.translation;
         let size = grid.cell_size as f32;
-        lines.square(pos, size, 0.0, Color::GREEN);
+        lines.square(pos, size, 0.0, Color::GOLD);
     }
 }
