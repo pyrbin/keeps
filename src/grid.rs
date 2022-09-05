@@ -30,9 +30,9 @@ impl Plugin for GridPlugin {
 }
 
 #[derive(Component, Debug)]
-pub struct GridEntity;
+pub struct GridSpatial;
 
-#[derive(Component, Debug, Default, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Hash)]
 pub struct Coord {
     pub x: i32,
     pub y: i32,
@@ -112,7 +112,7 @@ impl Grid {
 
 fn maintain_grid_cache(
     mut grid: ResMut<Grid>,
-    query: Query<(Entity, &Transform), (Changed<Transform>, With<GridEntity>)>,
+    query: Query<(Entity, &Transform), (Changed<Transform>, With<GridSpatial>)>,
 ) {
     for (entity, transform) in query.iter() {
         grid.maintain_entity(entity, transform.translation.xz());

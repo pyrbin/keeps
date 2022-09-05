@@ -3,18 +3,28 @@ mod board;
 mod camera;
 mod debug;
 mod dx;
+mod enemy;
 mod grid;
+mod health;
 mod state;
+mod unit;
 mod utils;
+mod window;
+mod world_gen;
 
 pub mod prelude {
     pub use crate::assets::*;
     pub use crate::board::*;
     pub use crate::camera::*;
     pub use crate::debug::*;
+    pub use crate::enemy::*;
     pub use crate::grid::*;
+    pub use crate::health::*;
     pub use crate::state::*;
+    pub use crate::unit::*;
     pub use crate::utils::*;
+    pub use crate::window::*;
+    pub use crate::world_gen::*;
 
     pub use bevy::math::Vec3Swizzles;
     pub use bevy::prelude::*;
@@ -24,7 +34,6 @@ pub mod prelude {
     pub use iyes_loopless::prelude::*;
 }
 
-use bevy::window::{PresentMode, WindowMode};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 pub use prelude::*;
 
@@ -34,26 +43,7 @@ pub const UNIT_BOARD_HEIGHT: i32 = 15;
 pub const KEEP_BOARD_HEIGHT: i32 = 5;
 
 pub fn setup_app(app: &mut App) -> &mut App {
-    app.insert_resource(Msaa { samples: 4 })
-        .insert_resource(ClearColor(Color::hex("171717").unwrap()))
-        .insert_resource(WindowDescriptor {
-            title: "keeps".to_string(),
-            width: 1280.0,
-            height: 720.0,
-            position: WindowPosition::Automatic,
-            scale_factor_override: Some(1.0),
-            present_mode: PresentMode::AutoVsync,
-            resizable: true,
-            decorations: true,
-            cursor_locked: false,
-            cursor_visible: true,
-            mode: WindowMode::Windowed,
-            transparent: false,
-            canvas: Some("#bevy".to_string()),
-            fit_canvas_to_parent: true,
-            ..Default::default()
-        });
-
+    app.add_plugin(WindowPlugin);
     app.add_plugins_with(DefaultPlugins, |group| {
         group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
     });
@@ -62,8 +52,8 @@ pub fn setup_app(app: &mut App) -> &mut App {
 
     #[cfg(debug_assertions)]
     app.add_plugin(dx::DiagnosticsPlugin);
-
     app.add_plugin(AssetsPlugin::continue_to(AppState::WorldGen));
+    app.add_plugin(WorldGenPlugin);
     app.add_plugin(DebugPlugin);
     app.add_plugin(CameraPlugin);
     app.add_plugin(GridPlugin::with_cell_size(BOARD_CELL_SIZE));
@@ -76,5 +66,6 @@ pub fn setup_app(app: &mut App) -> &mut App {
             -(UNIT_BOARD_HEIGHT * BOARD_CELL_SIZE) as f32,
         ),
     }));
+    app.add_plugin(EnemyPlugin);
     app
 }

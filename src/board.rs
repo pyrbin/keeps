@@ -14,11 +14,6 @@ impl Plugin for BoardPlugin {
         app.insert_resource(self.settings.clone());
         app.init_resource::<Option<GridSelection>>();
 
-        app.add_enter_system_set(
-            AppState::WorldGen,
-            ConditionSet::new().with_system(generate_boards).into(),
-        );
-
         app.add_system_set(
             ConditionSet::new()
                 .run_in_state(AppState::InGame)
@@ -42,58 +37,16 @@ impl Plugin for BoardPlugin {
 pub struct KeepCell;
 
 #[derive(Component, Debug)]
-pub struct UnitCell;
+pub struct BattleCell;
 
 #[derive(Default, Debug, Clone, Deref)]
-pub struct GridSelection(Coord);
+pub struct GridSelection(pub Coord);
 
 #[derive(Debug, Clone)]
 pub struct BoardSettings {
     pub unit_board: (i32, i32),
     pub keep_board: (i32, i32),
     pub offset: Vec3,
-}
-
-fn generate_boards(mut cmds: Commands, mut grid: ResMut<Grid>, board_settings: Res<BoardSettings>) {
-    for x in 0..board_settings.unit_board.0 {
-        for y in 0..board_settings.unit_board.1 {
-            let local_coord = Coord::new(x, y);
-            let pos = board_settings.offset + grid.to_world(local_coord);
-            let cell = cmds
-                .spawn_bundle(TransformBundle {
-                    local: Transform::from_translation(pos),
-                    ..default()
-                })
-                .insert(Name::new(format!("cell_unit ({}, {})", x, y)))
-                .insert(GridEntity)
-                .insert(UnitCell)
-                .id();
-
-            grid.maintain_entity(cell, pos.xz());
-        }
-    }
-
-    let offset = board_settings.offset
-        + board_settings.unit_board.1 as f32 * grid.cell_size as f32 * Vec3::Z;
-    for x in 0..board_settings.keep_board.0 {
-        for y in 0..board_settings.keep_board.1 {
-            let local_coord = Coord::new(x, y);
-            let pos = offset + grid.to_world(local_coord);
-            let cell = cmds
-                .spawn_bundle(TransformBundle {
-                    local: Transform::from_translation(pos),
-                    ..default()
-                })
-                .insert(Name::new(format!("cell_keep ({}, {})", x, y)))
-                .insert(GridEntity)
-                .insert(KeepCell)
-                .id();
-
-            grid.maintain_entity(cell, pos.xz());
-        }
-    }
-
-    cmds.insert_resource(NextState(AppState::InGame));
 }
 
 fn update_mouse_grid_selection(
@@ -168,7 +121,7 @@ fn debug_grid_selection(
 }
 
 fn debug_unit_board_cells(
-    query: Query<&Transform, With<UnitCell>>,
+    query: Query<&Transform, With<BattleCell>>,
     grid: Res<Grid>,
     mut lines: ResMut<DebugLines>,
 ) {
