@@ -14,16 +14,13 @@ impl AssetsPlugin {
 impl Plugin for AssetsPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
-            .add_system_set(
-                SystemSet::on_exit(AppState::AssetLoading)
-                    .with_system(despawn_all_with::<LoadingMenu>),
-            )
+            .add_exit_system(AppState::AssetLoading, despawn_all_with::<LoadingMenu>)
             .add_loading_state(
                 LoadingState::new(AppState::AssetLoading)
                     .with_collection::<FontAssets>()
                     .with_collection::<TextureAssets>()
                     .with_collection::<AudioAssets>()
-                    .continue_to_state(self.next_state),
+                    .continue_to_state(AppState::WorldGen),
             );
     }
 }

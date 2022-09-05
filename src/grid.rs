@@ -19,75 +19,79 @@ impl Plugin for GridPlugin {
             cell_size: self.cell_size,
             ..Default::default()
         });
+
         app.add_system_set(
-            SystemSet::on_update(AppState::InGame).with_system(grid_entity_update_system),
+            ConditionSet::new()
+                .run_in_state(AppState::InGame)
+                .with_system(maintain_grid_cache)
+                .into(),
         );
     }
 }
 
 #[derive(Component, Debug)]
-pub struct Cell;
+pub struct GridEntity;
 
 #[derive(Component, Debug, Default, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct GridCoord {
+pub struct Coord {
     pub x: i32,
     pub y: i32,
 }
 
-impl GridCoord {
+impl Coord {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
 }
 
-impl From<(i32, i32)> for GridCoord {
+impl From<(i32, i32)> for Coord {
     fn from((x, y): (i32, i32)) -> Self {
         Self { x, y }
     }
 }
 
-impl From<GridCoord> for Vec2 {
-    fn from(pos: GridCoord) -> Self {
+impl From<Coord> for Vec2 {
+    fn from(pos: Coord) -> Self {
         Vec2::new(pos.x as f32, pos.y as f32)
     }
 }
 
-impl From<&GridCoord> for Vec2 {
-    fn from(pos: &GridCoord) -> Self {
+impl From<&Coord> for Vec2 {
+    fn from(pos: &Coord) -> Self {
         Vec2::new(pos.x as f32, pos.y as f32)
     }
 }
 
-impl From<Vec2> for GridCoord {
+impl From<Vec2> for Coord {
     fn from(pos: Vec2) -> Self {
-        GridCoord::new(pos.x as i32, pos.y as i32)
+        Coord::new(pos.x as i32, pos.y as i32)
     }
 }
 
 #[derive(Debug, Default)]
 pub struct Grid {
-    pub storage: HashMap<GridCoord, HashSet<Entity>>,
-    pub associations: HashMap<Entity, GridCoord>,
+    pub storage: HashMap<Coord, HashSet<Entity>>,
+    pub associations: HashMap<Entity, Coord>,
     pub cell_size: i32,
 }
 
 impl Grid {
     #[inline]
-    pub fn to_world(&self, coord: GridCoord) -> Vec3 {
+    pub fn to_world(&self, coord: Coord) -> Vec3 {
         let coord_vec2: Vec2 = coord.into();
         let cell_size = Vec2::splat(self.cell_size as f32 / 2.);
         Vec3::new(coord_vec2.x + cell_size.x, 0., coord_vec2.y + cell_size.y)
     }
 
     #[inline]
-    pub fn to_coord(&self, world: Vec2) -> GridCoord {
+    pub fn to_coord(&self, world: Vec2) -> Coord {
         let offset = (self.cell_size / 2) as f32;
         let xy = world + Vec2::splat(offset);
         xy.floor().into()
     }
 
     #[inline]
-    pub fn update_entity(&mut self, entity: Entity, pos: Vec2) {
+    pub fn maintain_entity(&mut self, entity: Entity, pos: Vec2) {
         let coord = self.to_coord(pos);
         if let Some(old_coord) = self.associations.get(&entity) {
             if *old_coord != coord {
@@ -101,16 +105,16 @@ impl Grid {
         }
     }
 
-    pub fn in_bounds(&self, coord: GridCoord) -> bool {
+    pub fn in_bounds(&self, coord: Coord) -> bool {
         self.storage.contains_key(&coord)
     }
 }
 
-fn grid_entity_update_system(
+fn maintain_grid_cache(
     mut grid: ResMut<Grid>,
-    query: Query<(Entity, &Transform), (Changed<Transform>, With<Cell>)>,
+    query: Query<(Entity, &Transform), (Changed<Transform>, With<GridEntity>)>,
 ) {
     for (entity, transform) in query.iter() {
-        grid.update_entity(entity, transform.translation.xz());
+        grid.maintain_entity(entity, transform.translation.xz());
     }
 }

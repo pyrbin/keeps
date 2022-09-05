@@ -34,12 +34,12 @@ pub fn diagnostic_ui(ui: &mut egui::Ui, diagnostics: &Diagnostics, app_state: &A
 pub fn egui_display_diagnostics(
     mut egui_context: ResMut<EguiContext>,
     diagnostics: Res<Diagnostics>,
-    app_state: Res<State<AppState>>,
+    app_state: Res<CurrentState<AppState>>,
 ) {
     egui::Window::new("Diagnostics")
         .min_width(0.0)
         .default_width(1.0)
         .show(egui_context.ctx_mut(), |ui| {
-            diagnostic_ui(ui, &*diagnostics, app_state.current());
+            diagnostic_ui(ui, &*diagnostics, &app_state.0);
         });
 }

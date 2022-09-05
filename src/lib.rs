@@ -21,6 +21,7 @@ pub mod prelude {
     pub use bevy::render::texture::ImageSettings;
     pub use bevy::winit::WinitSettings;
     pub use bevy_prototype_debug_lines::DebugLines;
+    pub use iyes_loopless::prelude::*;
 }
 
 use bevy::window::{PresentMode, WindowMode};
@@ -57,12 +58,14 @@ pub fn setup_app(app: &mut App) -> &mut App {
         group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
     });
 
+    app.add_loopless_state(AppState::AssetLoading);
+
     #[cfg(debug_assertions)]
     app.add_plugin(dx::DiagnosticsPlugin);
 
+    app.add_plugin(AssetsPlugin::continue_to(AppState::WorldGen));
     app.add_plugin(DebugPlugin);
     app.add_plugin(CameraPlugin);
-    app.add_plugin(AssetsPlugin::continue_to(AppState::WorldGen));
     app.add_plugin(GridPlugin::with_cell_size(BOARD_CELL_SIZE));
     app.add_plugin(BoardPlugin::with_settings(BoardSettings {
         unit_board: (BOARD_WIDTH, UNIT_BOARD_HEIGHT),
@@ -73,7 +76,5 @@ pub fn setup_app(app: &mut App) -> &mut App {
             -(UNIT_BOARD_HEIGHT * BOARD_CELL_SIZE) as f32,
         ),
     }));
-
-    app.add_state(AppState::AssetLoading);
     app
 }

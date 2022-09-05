@@ -10,7 +10,7 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(LookTransformPlugin);
         app.add_plugin(OrbitCameraPlugin::default());
-        app.add_system_set(SystemSet::on_enter(AppState::InGame).with_system(setup_camera));
+        app.add_enter_system(AppState::InGame, setup_camera);
     }
 }
 

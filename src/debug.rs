@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use bevy::pbr::wireframe::WireframePlugin;
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
 use std::f32::consts::{FRAC_PI_2, PI};
 
@@ -9,7 +10,15 @@ impl Plugin for DebugPlugin {
         app.add_plugin(DebugLinesPlugin::with_depth_test(true));
 
         #[cfg(debug_assertions)]
-        app.add_system(debug_origin_axis);
+        app.add_plugin(WireframePlugin);
+
+        #[cfg(debug_assertions)]
+        app.add_system_set(
+            ConditionSet::new()
+                .run_in_state(AppState::InGame)
+                .with_system(debug_origin_axis)
+                .into(),
+        );
     }
 }
 
