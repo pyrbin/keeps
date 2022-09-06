@@ -8,7 +8,7 @@ impl Plugin for WindowPlugin {
         app.insert_resource(Msaa { samples: 4 })
             .insert_resource(ClearColor(Color::hex("171717").unwrap()))
             .insert_resource(WindowDescriptor {
-                title: "keeps".to_string(),
+                title: "coline".to_string(),
                 width: 1280.0,
                 height: 720.0,
                 position: WindowPosition::Automatic,

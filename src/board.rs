@@ -46,21 +46,19 @@ pub struct GridSelection(pub Coord);
 pub struct BoardSettings {
     pub unit_board: (i32, i32),
     pub keep_board: (i32, i32),
-    pub offset: Vec3,
 }
 
 fn update_mouse_grid_selection(
     mut selection: ResMut<Option<GridSelection>>,
     windows: Res<Windows>,
     cameras: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-    board_settings: Res<BoardSettings>,
     grid: Res<Grid>,
     mut lines: ResMut<DebugLines>,
 ) {
     let (camera, camera_transform) = cameras.single();
     let (ray_pos, ray_dir) =
         ray_from_mouse_position(windows.get_primary().unwrap(), camera, camera_transform);
-    let (plane_pos, plane_normal) = (board_settings.offset, Vec3::Y);
+    let (plane_pos, plane_normal) = (grid.offset, Vec3::Y);
     let point = plane_intersection(ray_pos, ray_dir, plane_pos, plane_normal);
 
     if point.is_finite() {

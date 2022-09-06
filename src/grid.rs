@@ -5,11 +5,12 @@ use crate::AppState;
 
 pub struct GridPlugin {
     pub cell_size: i32,
+    pub offset: Vec3,
 }
 
 impl GridPlugin {
-    pub fn with_cell_size(cell_size: i32) -> Self {
-        Self { cell_size }
+    pub fn new(cell_size: i32, offset: Vec3) -> Self {
+        Self { cell_size, offset }
     }
 }
 
@@ -17,7 +18,8 @@ impl Plugin for GridPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Grid {
             cell_size: self.cell_size,
-            ..Default::default()
+            offset: self.offset,
+            ..default()
         });
 
         app.add_system_set(
@@ -73,21 +75,23 @@ pub struct Grid {
     pub storage: HashMap<Coord, HashSet<Entity>>,
     pub associations: HashMap<Entity, Coord>,
     pub cell_size: i32,
+    pub offset: Vec3,
 }
 
 impl Grid {
     #[inline]
     pub fn to_world(&self, coord: Coord) -> Vec3 {
-        let coord_vec2: Vec2 = coord.into();
-        let cell_size = Vec2::splat(self.cell_size as f32 / 2.);
-        Vec3::new(coord_vec2.x + cell_size.x, 0., coord_vec2.y + cell_size.y)
+        let x = coord.x as f32 * self.cell_size as f32;
+        let y = coord.y as f32 * self.cell_size as f32;
+        Vec3::new(x, 0.0, y) + self.offset
     }
 
     #[inline]
     pub fn to_coord(&self, world: Vec2) -> Coord {
-        let offset = (self.cell_size / 2) as f32;
-        let xy = world + Vec2::splat(offset);
-        xy.floor().into()
+        let p = Vec3::new(world.x, 0.0, world.y) - self.offset;
+        let x = (p.x / self.cell_size as f32).round() as i32;
+        let y = (p.z / self.cell_size as f32).round() as i32;
+        Coord::new(x, y)
     }
 
     #[inline]
@@ -103,6 +107,10 @@ impl Grid {
             self.storage.entry(coord).or_default().insert(entity);
             self.associations.insert(entity, coord);
         }
+    }
+
+    pub fn transform(&self) -> Transform {
+        Transform::from_translation(self.offset)
     }
 
     pub fn in_bounds(&self, coord: Coord) -> bool {

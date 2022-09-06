@@ -103,7 +103,7 @@ fn enemy_spawn(
                         subdivisions: 1,
                     })),
                     material: materials.add(StandardMaterial {
-                        base_color: Color::YELLOW,
+                        base_color: Color::WHITE,
                         alpha_mode: AlphaMode::Blend,
                         unlit: true,
                         ..default()

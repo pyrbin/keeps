@@ -37,7 +37,7 @@ pub mod prelude {
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 pub use prelude::*;
 
-pub const BOARD_WIDTH: i32 = 10;
+pub const BOARD_WIDTH: i32 = 11;
 pub const BOARD_CELL_SIZE: i32 = 1;
 pub const UNIT_BOARD_HEIGHT: i32 = 15;
 pub const KEEP_BOARD_HEIGHT: i32 = 5;
@@ -56,15 +56,17 @@ pub fn setup_app(app: &mut App) -> &mut App {
     app.add_plugin(WorldGenPlugin);
     app.add_plugin(DebugPlugin);
     app.add_plugin(CameraPlugin);
-    app.add_plugin(GridPlugin::with_cell_size(BOARD_CELL_SIZE));
+    app.add_plugin(GridPlugin::new(
+        BOARD_CELL_SIZE,
+        Vec3::new(
+            -(BOARD_WIDTH * BOARD_CELL_SIZE) as f32 / 2.0 + BOARD_CELL_SIZE as f32 / 2.0,
+            0.0,
+            -(UNIT_BOARD_HEIGHT * BOARD_CELL_SIZE) as f32 + BOARD_CELL_SIZE as f32 / 2.0,
+        ),
+    ));
     app.add_plugin(BoardPlugin::with_settings(BoardSettings {
         unit_board: (BOARD_WIDTH, UNIT_BOARD_HEIGHT),
         keep_board: (BOARD_WIDTH, KEEP_BOARD_HEIGHT),
-        offset: Vec3::new(
-            -(BOARD_WIDTH * BOARD_CELL_SIZE) as f32 / 2.0,
-            0.0,
-            -(UNIT_BOARD_HEIGHT * BOARD_CELL_SIZE) as f32,
-        ),
     }));
     app.add_plugin(EnemyPlugin);
     app
