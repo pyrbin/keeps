@@ -18,7 +18,7 @@ name = "client"
 path = "src/bin/client.rs"
 
 [features]
-dev = ["bevy/dynamic"]
+dev = ["bevy/dynamic", "bevy-inspector-egui", "bevy_egui"]
 
 [dependencies.bevy]
 version = "0.8.0"
@@ -32,8 +32,8 @@ iyes_loopless = "0.7.1"
 
 smooth-bevy-cameras = { git = "https://github.com/bonsairobo/smooth-bevy-cameras" }
 
-bevy_egui = "0.15.1"
-bevy-inspector-egui = "0.12.1"
+bevy_egui = { version = "0.15.1", optional = true }
+bevy-inspector-egui = { version = "0.12.1", optional = true }
 bevy_prototype_debug_lines = { version = "0.8", features = ["3d"] }
 
 rand = "0.8.3"

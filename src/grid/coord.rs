@@ -22,7 +22,8 @@ pub const DIRS: [Coord; 4] = [
     Coord { x: 0, y: 1 },
 ];
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+/// A coordinate in a 2D grid.
+#[cfg_attr(feature = "dev", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component, Default, Debug, PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord)]
 pub struct Coord {
     pub x: i32,
@@ -30,18 +31,22 @@ pub struct Coord {
 }
 
 impl Coord {
+    /// Creates a new coord.
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
 
+    /// Returns the 4-directional neighbors of a coordinate.
     pub fn neighbors(self) -> impl Iterator<Item = Coord> {
         DIRS.iter().map(move |&dir| self + dir)
     }
 
+    /// Returns the 8-directional neighbors of a coordinate.
     pub fn neighbors8(self) -> impl Iterator<Item = Coord> {
         DIRS_8.iter().map(move |&dir| self + dir)
     }
 
+    /// Returns the distance between two coordinates
     pub fn distance(&self, other: Coord) -> u16 {
         let di = (self.x as i32 - other.y as i32).abs();
         let dj = (self.x as i32 - other.y as i32).abs();
@@ -129,21 +134,23 @@ impl From<Coord> for IVec2 {
     }
 }
 
-pub fn neighbors<'a>(
-    coord: &'a Coord,
+/// Returns the 4-directional neighbors of a coordinate within bounds of given width and height.
+pub fn neighbors(
+    coord: &'_ Coord,
     width: usize,
     height: usize,
-) -> impl Iterator<Item = Coord> + 'a {
+) -> impl Iterator<Item = Coord> + '_ {
     coord
         .neighbors()
         .filter(move |&c| c.x >= 0 && c.y >= 0 && c.x < width as i32 && c.y < height as i32)
 }
 
-pub fn neighbors8<'a>(
-    coord: &'a Coord,
+/// Returns the 8-directional neighbors of a coordinate within bounds of given width and height.
+pub fn neighbors8(
+    coord: &'_ Coord,
     width: usize,
     height: usize,
-) -> impl Iterator<Item = Coord> + 'a {
+) -> impl Iterator<Item = Coord> + '_ {
     coord
         .neighbors8()
         .filter(move |&c| c.x >= 0 && c.y >= 0 && c.x < width as i32 && c.y < height as i32)

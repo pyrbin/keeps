@@ -19,7 +19,8 @@ impl Plugin for FlowFieldPlugin {
     }
 }
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+/// Describes a cost of a tile when calculating a flow field.
+#[cfg_attr(feature = "dev", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component, Debug, Deref, DerefMut, PartialEq, Eq, Clone, Copy)]
 pub struct Cost(pub u8);
 
@@ -34,22 +35,26 @@ impl Default for Cost {
     }
 }
 
-#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+/// The flow direction of a tile in a flow field.
+#[cfg_attr(feature = "dev", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component, Default, Debug, Clone, Deref, DerefMut)]
 pub struct FlowDirection(pub IVec2);
 
+/// A flow field component.
 #[derive(Component, Default, Debug)]
 pub struct FlowField {
     pub goal: Option<Coord>,
     pub last_updated_tick: f64,
 }
 
+/// Compute flow field event for a given goal.
 #[derive(Debug, Clone)]
 pub struct ComputeFlowField {
     pub goal: Coord,
     pub grid_entity: Entity,
 }
 
+/// Consumes [ComputeFlowField] events and computes & updates the flow field for the given goal.
 fn compute_flowfield_system(
     mut cmds: Commands,
     mut ev_compute: EventReader<ComputeFlowField>,
@@ -76,6 +81,7 @@ fn compute_flowfield_system(
             vec![None; grid.storage.width() * grid.storage.height()],
         );
 
+        // Compute the integration field.
         let mut queue = BinaryHeap::new();
         let mut closed = HashSet::new();
 
@@ -114,6 +120,7 @@ fn compute_flowfield_system(
             }
         }
 
+        // Compute the flow field from the integration field.
         for y in 0..grid.storage.height() {
             for x in 0..grid.storage.width() {
                 let coord = Coord::new(x as i32, y as i32);
@@ -154,6 +161,6 @@ fn compute_flowfield_system(
             last_updated_tick: time.seconds_since_startup(),
         });
 
-        info!("Elapsed: {:.2?}", now.elapsed());
+        log::info!("Compute took: {:.2?}", now.elapsed());
     }
 }

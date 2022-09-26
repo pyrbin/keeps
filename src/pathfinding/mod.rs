@@ -1,6 +1,5 @@
 mod flowfield;
-
-use self::flowfield::*;
+pub use self::flowfield::*;
 use crate::prelude::*;
 
 pub struct PathfindingPlugin;
@@ -13,6 +12,7 @@ impl Plugin for PathfindingPlugin {
             ConditionSet::new().with_system(setup_grids).into(),
         );
 
+        #[cfg(feature = "dev")]
         app.add_system_set(
             ConditionSet::new()
                 .run_in_state(AppState::InGame)
@@ -26,9 +26,10 @@ impl Plugin for PathfindingPlugin {
 #[derive(Component, Default, Debug, Deref, DerefMut)]
 pub struct DebugColor(Color);
 
+/// TODO: This is a temporary solution to debug the grid.
 fn setup_grids(mut cmds: Commands, mut ev_compute: EventWriter<ComputeFlowField>) {
-    const WIDTH: usize = 10;
-    const HEIGHT: usize = 10;
+    const WIDTH: usize = 20;
+    const HEIGHT: usize = 20;
     const CELL_SIZE: f32 = 1.0;
     const FLOW_FIELD_CELL_MODIFIER: f32 = 0.5;
 
@@ -79,12 +80,10 @@ fn create_grid(
                 } else {
                     Cost::EMPTY
                 }
+            } else if y % 4 == 0 {
+                Cost::EMPTY
             } else {
-                if y % 4 == 0 {
-                    Cost::EMPTY
-                } else {
-                    Cost::MAX
-                }
+                Cost::MAX
             };
             let cell = cmds
                 .spawn_bundle(TransformBundle {
@@ -105,17 +104,19 @@ fn create_grid(
     grid_entity
 }
 
+#[cfg(feature = "dev")]
 fn debug_grid(
-    grids: Query<(&Grid, &DebugColor)>,
+    mut grids: Query<(&Grid, &DebugColor)>,
     cells: Query<(&GlobalTransform, &Parent), With<Coord>>,
     mut lines: ResMut<DebugLines>,
 ) {
     for (transform, parent) in cells.iter() {
-        let (grid, debug_color) = grids.get(parent.get()).unwrap();
-        lines.square(transform.translation(), grid.cell_size, 0., debug_color.0)
+        let (grid, debug_color) = grids.get_mut(parent.get()).unwrap();
+        lines.square(transform.translation(), grid.cell_size, 0., debug_color.0);
     }
 }
 
+#[cfg(feature = "dev")]
 fn debug_flowfield_grid(
     grids: Query<&Grid>,
     cells: Query<(&GlobalTransform, &FlowDirection, &Parent)>,

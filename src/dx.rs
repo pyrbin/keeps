@@ -1,7 +1,5 @@
 use crate::prelude::*;
 use bevy::diagnostic::Diagnostics;
-use bevy_egui::*;
-use bevy_inspector_egui::WorldInspectorPlugin;
 
 pub struct DiagnosticsPlugin;
 
@@ -40,6 +38,6 @@ pub fn egui_display_diagnostics(
         .min_width(0.0)
         .default_width(1.0)
         .show(egui_context.ctx_mut(), |ui| {
-            diagnostic_ui(ui, &*diagnostics, &app_state.0);
+            diagnostic_ui(ui, &diagnostics, &app_state.0);
         });
 }

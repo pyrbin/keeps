@@ -1,5 +1,5 @@
 use bevy::{window::WindowId, winit::WinitWindows};
-use image;
+
 use keeps::prelude::*;
 use std::io::Cursor;
 use winit::window::Icon;
