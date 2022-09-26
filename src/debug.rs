@@ -24,20 +24,19 @@ impl Plugin for DebugPlugin {
 
 fn debug_origin_axis(mut lines: ResMut<DebugLines>) {
     const AXIS_LENGTH: f32 = 50.0;
-    lines.arrow(Vec3::ZERO, Vec3::X, AXIS_LENGTH, 0.0, Color::RED);
-    lines.arrow(Vec3::ZERO, Vec3::NEG_X, AXIS_LENGTH, 0.0, Color::RED);
+    lines.line_colored(Vec3::ZERO, Vec3::X * AXIS_LENGTH, 0.0, Color::RED);
+    lines.line_colored(Vec3::ZERO, Vec3::NEG_X * AXIS_LENGTH, 0.0, Color::RED);
 
-    lines.arrow(Vec3::ZERO, Vec3::Y, AXIS_LENGTH, 0.0, Color::GREEN);
-    lines.arrow(Vec3::ZERO, Vec3::NEG_Y, AXIS_LENGTH, 0.0, Color::GREEN);
+    lines.line_colored(Vec3::ZERO, Vec3::Y * AXIS_LENGTH, 0.0, Color::GREEN);
+    lines.line_colored(Vec3::ZERO, Vec3::NEG_Y * AXIS_LENGTH, 0.0, Color::GREEN);
 
-    lines.arrow(Vec3::ZERO, Vec3::Z, AXIS_LENGTH, 0.0, Color::BLUE);
-    lines.arrow(Vec3::ZERO, Vec3::NEG_Z, AXIS_LENGTH, 0.0, Color::BLUE);
+    lines.line_colored(Vec3::ZERO, Vec3::Z * AXIS_LENGTH, 0.0, Color::BLUE);
+    lines.line_colored(Vec3::ZERO, Vec3::NEG_Z * AXIS_LENGTH, 0.0, Color::BLUE);
 }
 
 pub trait DebugLinesExt {
     fn circle(&mut self, origin: Vec3, rot: Quat, radius: f32, duration: f32, color: Color);
     fn square(&mut self, origin: Vec3, size: f32, duration: f32, color: Color);
-    fn arrow(&mut self, origin: Vec3, dir: Vec3, length: f32, duration: f32, color: Color);
 }
 
 impl DebugLinesExt for DebugLines {
@@ -47,36 +46,6 @@ impl DebugLinesExt for DebugLines {
     fn square(&mut self, origin: Vec3, size: f32, duration: f32, color: Color) {
         add_square(self, origin, size, duration, color);
     }
-    fn arrow(&mut self, origin: Vec3, dir: Vec3, length: f32, duration: f32, color: Color) {
-        add_arrow(self, origin, dir, length, duration, color);
-    }
-}
-
-fn add_arrow(
-    lines: &mut DebugLines,
-    origin: Vec3,
-    dir: Vec3,
-    length: f32,
-    duration: f32,
-    color: Color,
-) {
-    let dir = dir.normalize();
-    let rot = Quat::from_rotation_arc(Vec3::Z, dir);
-    let end = origin + dir * length;
-    let arrow_tips_len = length.min(5.0);
-    lines.line_colored(origin, end, duration, color);
-    lines.line_colored(
-        end,
-        end + rot * Vec3::new(0.0, 0.1, -0.1) * arrow_tips_len,
-        duration,
-        color,
-    );
-    lines.line_colored(
-        end,
-        end + rot * Vec3::new(0.0, -0.1, -0.1) * arrow_tips_len,
-        duration,
-        color,
-    );
 }
 
 fn add_square(lines: &mut DebugLines, origin: Vec3, size: f32, duration: f32, color: Color) {

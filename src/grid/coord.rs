@@ -1,0 +1,150 @@
+use crate::prelude::*;
+use std::{
+    fmt::Debug,
+    ops::{Add, Mul, Sub},
+};
+
+pub const DIRS_8: [Coord; 8] = [
+    Coord { x: -1, y: -1 },
+    Coord { x: 0, y: -1 },
+    Coord { x: 1, y: -1 },
+    Coord { x: -1, y: 0 },
+    Coord { x: 1, y: 0 },
+    Coord { x: -1, y: 1 },
+    Coord { x: 0, y: 1 },
+    Coord { x: 1, y: 1 },
+];
+
+pub const DIRS: [Coord; 4] = [
+    Coord { x: 0, y: -1 },
+    Coord { x: -1, y: 0 },
+    Coord { x: 1, y: 0 },
+    Coord { x: 0, y: 1 },
+];
+
+#[cfg_attr(feature = "debug", derive(bevy_inspector_egui::Inspectable))]
+#[derive(Component, Default, Debug, PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord)]
+pub struct Coord {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl Coord {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
+    pub fn neighbors(self) -> impl Iterator<Item = Coord> {
+        DIRS.iter().map(move |&dir| self + dir)
+    }
+
+    pub fn neighbors8(self) -> impl Iterator<Item = Coord> {
+        DIRS_8.iter().map(move |&dir| self + dir)
+    }
+
+    pub fn distance(&self, other: Coord) -> u16 {
+        let di = (self.x as i32 - other.y as i32).abs();
+        let dj = (self.x as i32 - other.y as i32).abs();
+
+        if di > dj {
+            (10 * (di - dj) + 14 * (dj)) as u16
+        } else {
+            (10 * (dj - di) + 14 * (di)) as u16
+        }
+    }
+}
+
+impl Add<Coord> for Coord {
+    type Output = Coord;
+
+    fn add(self, rhs: Coord) -> Self::Output {
+        Self {
+            x: self.x.wrapping_add(rhs.x),
+            y: self.y.wrapping_add(rhs.y),
+        }
+    }
+}
+
+impl Sub<Coord> for Coord {
+    type Output = Coord;
+
+    fn sub(self, rhs: Coord) -> Self::Output {
+        Self {
+            x: self.x.wrapping_sub(rhs.x),
+            y: self.y.wrapping_sub(rhs.y),
+        }
+    }
+}
+
+impl Mul<i32> for Coord {
+    type Output = Coord;
+
+    fn mul(self, rhs: i32) -> Self::Output {
+        Self {
+            x: self.x.wrapping_mul(rhs),
+            y: self.y.wrapping_mul(rhs),
+        }
+    }
+}
+
+impl From<(i32, i32)> for Coord {
+    fn from(tuple: (i32, i32)) -> Self {
+        Self {
+            x: tuple.0,
+            y: tuple.1,
+        }
+    }
+}
+
+impl From<(usize, usize)> for Coord {
+    fn from(tuple: (usize, usize)) -> Self {
+        Self {
+            x: tuple.0 as i32,
+            y: tuple.1 as i32,
+        }
+    }
+}
+
+impl From<(f32, f32)> for Coord {
+    fn from(tuple: (f32, f32)) -> Self {
+        Self {
+            x: tuple.0 as i32,
+            y: tuple.1 as i32,
+        }
+    }
+}
+
+impl From<IVec2> for Coord {
+    fn from(vec: IVec2) -> Self {
+        Self { x: vec.x, y: vec.y }
+    }
+}
+
+impl From<Coord> for IVec2 {
+    fn from(coord: Coord) -> IVec2 {
+        IVec2 {
+            x: coord.x,
+            y: coord.y,
+        }
+    }
+}
+
+pub fn neighbors<'a>(
+    coord: &'a Coord,
+    width: usize,
+    height: usize,
+) -> impl Iterator<Item = Coord> + 'a {
+    coord
+        .neighbors()
+        .filter(move |&c| c.x >= 0 && c.y >= 0 && c.x < width as i32 && c.y < height as i32)
+}
+
+pub fn neighbors8<'a>(
+    coord: &'a Coord,
+    width: usize,
+    height: usize,
+) -> impl Iterator<Item = Coord> + 'a {
+    coord
+        .neighbors8()
+        .filter(move |&c| c.x >= 0 && c.y >= 0 && c.x < width as i32 && c.y < height as i32)
+}

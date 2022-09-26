@@ -20,7 +20,7 @@ impl Plugin for AssetsPlugin {
                     .with_collection::<FontAssets>()
                     .with_collection::<TextureAssets>()
                     .with_collection::<AudioAssets>()
-                    .continue_to_state(AppState::WorldGen),
+                    .continue_to_state(self.next_state),
             );
     }
 }
