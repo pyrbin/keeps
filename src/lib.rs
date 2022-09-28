@@ -27,7 +27,7 @@ pub fn setup_app(app: &mut App) -> &mut App {
         app.add_plugin(dx::DiagnosticsPlugin);
         app.register_inspectable::<Coord>();
         app.register_inspectable::<Cost>();
-        app.register_inspectable::<FlowDirection>();
+        app.register_inspectable::<Flow>();
         log::info!("Loaded diagnostics & debugging features.");
     }
 

@@ -19,7 +19,7 @@ impl Plugin for FlowFieldPlugin {
     }
 }
 
-/// Describes a cost of a tile when calculating a flow field.
+/// The cost of a tile when calculating a flow field.
 #[cfg_attr(feature = "dev", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component, Debug, Deref, DerefMut, PartialEq, Eq, Clone, Copy)]
 pub struct Cost(pub u8);
@@ -38,9 +38,10 @@ impl Default for Cost {
 /// The flow direction of a tile in a flow field.
 #[cfg_attr(feature = "dev", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component, Default, Debug, Clone, Deref, DerefMut)]
-pub struct FlowDirection(pub IVec2);
+pub struct Flow(pub IVec2);
 
-/// A flow field component.
+/// A flow field component. Stores the goal of the flow field & the time it was last updated.
+#[cfg_attr(feature = "dev", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component, Default, Debug)]
 pub struct FlowField {
     pub goal: Option<Coord>,
@@ -60,7 +61,7 @@ fn compute_flowfield_system(
     mut ev_compute: EventReader<ComputeFlowField>,
     time: Res<Time>,
     grids: Query<(Entity, &Grid), With<FlowField>>,
-    cells: Query<(Entity, &Cost, &FlowDirection, &Parent, &Coord)>,
+    cells: Query<(Entity, &Cost, &Flow, &Parent, &Coord)>,
 ) {
     for ((grid_entity, grid), ev) in
         ev_compute
@@ -71,9 +72,11 @@ fn compute_flowfield_system(
             })
     {
         use std::time::Instant;
-        let now = Instant::now();
 
+        let now = Instant::now();
         let goal = ev.goal;
+
+        log::info!("Compute for goal: {:?}", goal);
 
         let mut integration = Field::new(
             grid.storage.width(),
@@ -129,16 +132,20 @@ fn compute_flowfield_system(
                     continue;
                 }
 
+                let entity = match grid.storage[&coord] {
+                    Some(entity) => entity,
+                    None => continue,
+                };
+
                 let mut min_cost = i32::MAX;
                 let mut min_coord = Coord::default();
 
                 if coord == goal {
-                    cmds.entity(grid_entity)
-                        .insert(FlowDirection(min_coord.into()));
+                    cmds.entity(entity).insert(Flow(min_coord.into()));
                     continue;
                 }
 
-                for neighbor in integration.neighbors(&coord) {
+                for neighbor in integration.neighbors8(&coord) {
                     if let Some(cost) = integration[&neighbor] {
                         if cost < min_cost {
                             min_cost = cost;
@@ -147,12 +154,7 @@ fn compute_flowfield_system(
                     }
                 }
 
-                let entity = match grid.storage[&coord] {
-                    Some(entity) => entity,
-                    None => continue,
-                };
-
-                cmds.entity(entity).insert(FlowDirection(min_coord.into()));
+                cmds.entity(entity).insert(Flow(min_coord.into()));
             }
         }
 
@@ -163,4 +165,25 @@ fn compute_flowfield_system(
 
         log::info!("Compute took: {:.2?}", now.elapsed());
     }
+}
+
+// Create a flow field
+pub fn create_flowfield(
+    cmds: &mut Commands,
+    width: usize,
+    height: usize,
+    cell_size: f32,
+    transform: &Transform,
+) -> Entity {
+    cmds.spawn_bundle(GridBundle::new(width, height, cell_size, transform))
+        .with_children(|parent| {
+            for coord in iter_coords(width, height) {
+                parent
+                    .spawn_bundle(CellBundle::new(coord))
+                    .insert(Cost::default())
+                    .insert(Flow::default());
+            }
+        })
+        .insert(FlowField::default())
+        .id()
 }

@@ -21,8 +21,50 @@ impl Plugin for GridPlugin {
     }
 }
 
+#[derive(Bundle, Default)]
+pub struct GridBundle {
+    pub name: Name,
+    pub grid: Grid,
+    #[bundle]
+    pub transform_bundle: TransformBundle,
+}
+
+impl GridBundle {
+    pub fn new(width: usize, height: usize, cell_size: f32, transform: &Transform) -> Self {
+        Self {
+            name: Name::new(format!("Grid {:?}", (width, height))),
+            grid: Grid::new(width, height, cell_size),
+            transform_bundle: TransformBundle {
+                local: *transform,
+                ..Default::default()
+            },
+        }
+    }
+}
+
+#[derive(Bundle, Default)]
+pub struct CellBundle {
+    pub name: Name,
+    pub coord: Coord,
+    #[bundle]
+    pub transform_bundle: TransformBundle,
+}
+
+impl CellBundle {
+    pub fn new(coord: Coord) -> Self {
+        Self {
+            name: Name::new(format!("Cell {:?}", coord)),
+            coord: coord,
+            transform_bundle: TransformBundle {
+                local: Transform::from_translation(coord_to_local(&coord, 1.0)),
+                ..Default::default()
+            },
+        }
+    }
+}
+
 /// A 2d grid component with cache storage for entity lookups.
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Clone)]
 pub struct Grid {
     pub storage: Field<Option<Entity>>,
     pub backward: HashMap<Entity, Coord>,
@@ -72,6 +114,9 @@ impl Grid {
         let coord = self.local_to_coord(local_pos);
         if let Some(old_coord) = self.backward.get(&entity) {
             if *old_coord != coord {
+                if let Some(old_entity) = self.storage[old_coord] {
+                    panic!("Entity {:?} already exists at {:?}", old_entity, old_coord);
+                }
                 self.storage[old_coord] = None;
                 self.storage[&coord] = Some(entity);
                 self.backward.insert(entity, coord);

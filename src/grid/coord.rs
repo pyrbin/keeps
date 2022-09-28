@@ -4,7 +4,7 @@ use std::{
     ops::{Add, Mul, Sub},
 };
 
-pub const DIRS_8: [Coord; 8] = [
+pub const NEIGHBORS_8: [Coord; 8] = [
     Coord { x: -1, y: -1 },
     Coord { x: 0, y: -1 },
     Coord { x: 1, y: -1 },
@@ -15,7 +15,7 @@ pub const DIRS_8: [Coord; 8] = [
     Coord { x: 1, y: 1 },
 ];
 
-pub const DIRS: [Coord; 4] = [
+pub const NEIGHBORS: [Coord; 4] = [
     Coord { x: 0, y: -1 },
     Coord { x: -1, y: 0 },
     Coord { x: 1, y: 0 },
@@ -38,24 +38,17 @@ impl Coord {
 
     /// Returns the 4-directional neighbors of a coordinate.
     pub fn neighbors(self) -> impl Iterator<Item = Coord> {
-        DIRS.iter().map(move |&dir| self + dir)
+        NEIGHBORS.iter().map(move |&dir| self + dir)
     }
 
     /// Returns the 8-directional neighbors of a coordinate.
     pub fn neighbors8(self) -> impl Iterator<Item = Coord> {
-        DIRS_8.iter().map(move |&dir| self + dir)
+        NEIGHBORS_8.iter().map(move |&dir| self + dir)
     }
 
     /// Returns the distance between two coordinates
     pub fn distance(&self, other: Coord) -> u16 {
-        let di = (self.x as i32 - other.y as i32).abs();
-        let dj = (self.x as i32 - other.y as i32).abs();
-
-        if di > dj {
-            (10 * (di - dj) + 14 * (dj)) as u16
-        } else {
-            (10 * (dj - di) + 14 * (di)) as u16
-        }
+        ((self.x - other.x).abs() + (self.y - other.y).abs()) as u16
     }
 }
 

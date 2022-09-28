@@ -49,14 +49,19 @@ impl<T: Default> Field<T> {
         neighbors8(coord, self.width, self.height)
     }
 
-    /// Iterates over the coordinates of the field.
+    /// Iterates over the items of the field.
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.data.iter()
     }
 
-    /// Iterates over the coordinates of the field.
+    /// Iterates over the items of the field.
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.data.iter_mut()
+    }
+
+    /// Iterates over the coordinates of the field.
+    pub fn iter_coords(&self) -> impl Iterator<Item = Coord> + '_ {
+        iter_coords(self.width, self.height)
     }
 
     /// Resize the field.
@@ -93,4 +98,10 @@ pub fn to_coord(i: usize, width: usize) -> Coord {
     let x = i % width;
     let y = i / width;
     Coord::new(x as i32, y as i32)
+}
+
+/// Iterates over the coordinates of a field with the given width and height.
+#[inline]
+pub fn iter_coords(width: usize, height: usize) -> impl Iterator<Item = Coord> {
+    (0..width * height).map(move |i| to_coord(i, width))
 }
