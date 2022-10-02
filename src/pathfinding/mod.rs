@@ -30,9 +30,9 @@ pub struct DebugColor(Color);
 fn setup_grids(mut cmds: Commands, mut ev_compute: EventWriter<ComputeFlowField>) {
     let flowfield = create_flowfield(
         &mut cmds,
-        10,
-        10,
-        1.0,
+        25,
+        25,
+        0.5,
         &Transform::from_translation(Vec3::ZERO),
     );
 

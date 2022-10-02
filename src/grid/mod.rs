@@ -1,11 +1,11 @@
 mod coord;
 mod field;
 
+use std::collections::HashMap;
+
 pub use self::coord::*;
 pub use self::field::*;
-
 use crate::prelude::*;
-use std::collections::HashMap;
 
 pub struct GridPlugin;
 

@@ -1,7 +1,9 @@
-use crate::prelude::*;
+use std::f32::consts::{FRAC_PI_2, PI};
+
 use bevy::pbr::wireframe::WireframePlugin;
 use bevy_prototype_debug_lines::{DebugLines, DebugLinesPlugin};
-use std::f32::consts::{FRAC_PI_2, PI};
+
+use crate::prelude::*;
 
 pub struct DebugPlugin;
 

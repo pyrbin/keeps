@@ -1,5 +1,6 @@
-use crate::prelude::*;
 use bevy_asset_loader::prelude::*;
+
+use crate::prelude::*;
 
 pub struct AssetsPlugin {
     pub next_state: AppState,

@@ -1,5 +1,6 @@
-use super::coord::{neighbors, neighbors8, Coord};
 use std::ops::{Index, IndexMut};
+
+use super::coord::{neighbors, neighbors8, Coord};
 
 /// A 2D field of values.
 #[derive(Clone, Debug, Default)]

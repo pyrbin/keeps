@@ -1,8 +1,9 @@
-use crate::prelude::*;
 use std::{
     fmt::Debug,
     ops::{Add, Mul, Sub},
 };
+
+use crate::prelude::*;
 
 pub const NEIGHBORS_8: [Coord; 8] = [
     Coord { x: -1, y: -1 },

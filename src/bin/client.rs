@@ -1,7 +1,7 @@
-use bevy::{window::WindowId, winit::WinitWindows};
-
-use keeps::prelude::*;
 use std::io::Cursor;
+
+use bevy::{window::WindowId, winit::WinitWindows};
+use keeps::prelude::*;
 use winit::window::Icon;
 
 fn main() {

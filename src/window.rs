@@ -1,5 +1,6 @@
-use crate::prelude::*;
 use bevy::window::{PresentMode, WindowMode};
+
+use crate::prelude::*;
 
 pub struct WindowPlugin;
 

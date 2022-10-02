@@ -1,5 +1,6 @@
-use crate::prelude::*;
 use bevy::diagnostic::Diagnostics;
+
+use crate::prelude::*;
 
 pub struct DiagnosticsPlugin;
 

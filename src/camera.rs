@@ -1,8 +1,9 @@
-use crate::prelude::*;
 use smooth_bevy_cameras::{
     controllers::orbit::{OrbitCameraBundle, OrbitCameraController, OrbitCameraPlugin},
     LookTransformPlugin,
 };
+
+use crate::prelude::*;
 
 pub struct CameraPlugin;
 
