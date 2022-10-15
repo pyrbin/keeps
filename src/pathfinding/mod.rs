@@ -33,7 +33,7 @@ fn setup_grids(mut cmds: Commands, mut ev_compute: EventWriter<ComputeFlowField>
         25,
         25,
         0.5,
-        &Transform::from_translation(Vec3::ZERO),
+        &Transform::from_translation(Vec3::new(0.5 / 2., 0.0, 0.5 / 2.)),
     );
 
     cmds.entity(flowfield)
@@ -50,25 +50,26 @@ fn setup_grids(mut cmds: Commands, mut ev_compute: EventWriter<ComputeFlowField>
 
 #[cfg(feature = "dev")]
 fn debug_grid(
-    mut grids: Query<(&Grid, &DebugColor)>,
-    cells: Query<(&GlobalTransform, &Parent), With<Coord>>,
+    mut grids: Query<(&Grid, &Transform, &DebugColor)>,
+    cells: Query<(&Coord, &Parent)>,
     mut lines: ResMut<DebugLines>,
 ) {
-    for (transform, parent) in cells.iter() {
-        let (grid, debug_color) = grids.get_mut(parent.get()).unwrap();
-        lines.square(transform.translation(), grid.cell_size, 0., debug_color.0);
+    for (coord, parent) in cells.iter() {
+        let (grid, grid_transform, debug_color) = grids.get_mut(parent.get()).unwrap();
+        let translation = grid.coord_to_world(&coord, grid_transform);
+        lines.square(translation, grid.cell_size, 0., debug_color.0);
     }
 }
 
 #[cfg(feature = "dev")]
 fn debug_flowfield_grid(
-    grids: Query<&Grid>,
-    cells: Query<(&GlobalTransform, &Flow, &Parent)>,
+    grids: Query<(&Grid, &Transform)>,
+    cells: Query<(&Coord, &Flow, &Parent)>,
     mut lines: ResMut<DebugLines>,
 ) {
-    for (transform, dir, parent) in cells.iter().filter(|(_, dir, _)| dir.0 != IVec2::ZERO) {
-        let grid = grids.get(parent.get()).unwrap();
-        let start = transform.translation();
+    for (coord, dir, parent) in cells.iter().filter(|(_, dir, _)| dir.0 != IVec2::ZERO) {
+        let (grid, grid_transform) = grids.get(parent.get()).unwrap();
+        let start = grid.coord_to_world(&coord, grid_transform);
         let end = start + Vec3::new(dir.x as f32, 0.0, dir.y as f32) * 0.35 * grid.cell_size;
         lines.line_colored(start, end, 0.0, Color::BEIGE);
         lines.square(end, 0.085 * grid.cell_size, 0.0, Color::BEIGE);

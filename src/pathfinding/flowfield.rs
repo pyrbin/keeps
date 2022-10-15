@@ -79,9 +79,9 @@ fn compute_flowfield_system(
         log::info!("Compute for goal: {:?}", goal);
 
         let mut integration = Field::new(
-            grid.storage.width(),
-            grid.storage.height(),
-            vec![None; grid.storage.width() * grid.storage.height()],
+            grid.storage.size.w,
+            grid.storage.size.h,
+            vec![None; grid.storage.data.len()],
         );
 
         // Compute the integration field.
@@ -123,9 +123,11 @@ fn compute_flowfield_system(
             }
         }
 
+        log::info!("Integration field computed in {:?}", now.elapsed());
+
         // Compute the flow field from the integration field.
-        for y in 0..grid.storage.height() {
-            for x in 0..grid.storage.width() {
+        for y in 0..grid.storage.size.w {
+            for x in 0..grid.storage.size.h {
                 let coord = Coord::new(x as i32, y as i32);
 
                 if integration[&coord].is_none() {
@@ -175,15 +177,17 @@ pub fn create_flowfield(
     cell_size: f32,
     transform: &Transform,
 ) -> Entity {
-    cmds.spawn_bundle(GridBundle::new(width, height, cell_size, transform))
-        .with_children(|parent| {
-            for coord in iter_coords(width, height) {
-                parent
-                    .spawn_bundle(CellBundle::new(coord))
-                    .insert(Cost::default())
-                    .insert(Flow::default());
-            }
-        })
-        .insert(FlowField::default())
-        .id()
+    cmds.spawn_grid(
+        width,
+        height,
+        cell_size,
+        transform,
+        |cell| {
+            cell
+                .insert(Cost::default())
+                .insert(Flow::default());
+        },
+    )
+    .insert(FlowField::default())
+    .id()
 }
