@@ -16,5 +16,6 @@ pub use crate::debug::*;
 pub use crate::grid::*;
 pub use crate::pathfinding::*;
 pub use crate::state::*;
+pub use crate::unit::*;
 pub use crate::utils::*;
 pub use crate::window::*;

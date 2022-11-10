@@ -128,6 +128,24 @@ impl From<Coord> for IVec2 {
     }
 }
 
+impl From<Vec2> for Coord {
+    fn from(vec: Vec2) -> Self {
+        Self {
+            x: vec.x as i32,
+            y: vec.y as i32,
+        }
+    }
+}
+
+impl From<Coord> for Vec2 {
+    fn from(coord: Coord) -> Vec2 {
+        Vec2 {
+            x: coord.x as f32,
+            y: coord.y as f32,
+        }
+    }
+}
+
 /// Returns the 4-directional neighbors of a coordinate within bounds of given width and height.
 pub fn neighbors(
     coord: &'_ Coord,

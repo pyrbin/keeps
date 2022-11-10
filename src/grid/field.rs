@@ -4,8 +4,8 @@ use super::coord::{neighbors, neighbors8, Coord};
 
 #[derive(Default, Clone, Debug)]
 pub struct FieldSize {
-    pub w: usize,
-    pub h: usize,
+    pub width: usize,
+    pub height: usize,
 }
 
 /// A 2D field of values.
@@ -17,36 +17,39 @@ pub struct Field<T: Default> {
 
 impl<T: Default> Field<T> {
     /// Creates a new field.
-    pub fn new(w: usize, h: usize, data: Vec<T>) -> Self {
+    pub fn new(width: usize, height: usize, data: Vec<T>) -> Self {
         Self {
             data,
-            size: FieldSize { w, h },
+            size: FieldSize { width, height },
         }
     }
 
     /// Returns the 1-dimensional index of a coordinate.
     pub fn to_1d(&self, coord: &Coord) -> usize {
-        to_1d(coord, self.size.w)
+        to_1d(coord, self.size.width)
     }
 
     /// Returns the 2-dimensional coordinate of a 1-dimensional index.
     pub fn to_coord(&self, index: usize) -> Coord {
-        to_coord(index, self.size.w)
+        to_coord(index, self.size.width)
     }
 
     /// Returns true if the given coordinate is within the field dimensions.
     pub fn within_bounds(&self, coord: &Coord) -> bool {
-        coord.x >= 0 && coord.y >= 0 && coord.x < self.size.w as i32 && coord.y < self.size.h as i32
+        coord.x >= 0
+            && coord.y >= 0
+            && coord.x < self.size.width as i32
+            && coord.y < self.size.height as i32
     }
 
     /// Returns the 4-directional neighbors of a coordinate.
     pub fn neighbors<'a>(&'a self, coord: &'a Coord) -> impl Iterator<Item = Coord> + 'a {
-        neighbors(coord, self.size.w, self.size.h)
+        neighbors(coord, self.size.width, self.size.height)
     }
 
     /// Returns the 8-directional neighbors of a coordinate.
     pub fn neighbors8<'a>(&'a self, coord: &'a Coord) -> impl Iterator<Item = Coord> + 'a {
-        neighbors8(coord, self.size.w, self.size.h)
+        neighbors8(coord, self.size.width, self.size.height)
     }
 
     /// Iterates over the items of the field.
@@ -61,14 +64,21 @@ impl<T: Default> Field<T> {
 
     /// Iterates over the coordinates of the field.
     pub fn iter_coords(&self) -> impl Iterator<Item = Coord> + '_ {
-        iter_coords(self.size.w, self.size.h)
+        iter_coords(self.size.width, self.size.height)
     }
 
     /// Resize the field.
     pub fn resize(&mut self, width: usize, height: usize) {
         self.data.resize_with(width * height, || T::default());
-        self.size.w = width;
-        self.size.h = height;
+        self.size.width = width;
+        self.size.height = height;
+    }
+
+    /// Clears the field.
+    pub fn clear(&mut self) {
+        for item in self.data.iter_mut() {
+            *item = T::default();
+        }
     }
 }
 

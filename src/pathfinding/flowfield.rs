@@ -1,6 +1,6 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashSet},
+    collections::{BinaryHeap},
 };
 
 use crate::prelude::*;
@@ -35,17 +35,35 @@ impl Default for Cost {
     }
 }
 
-/// The flow direction of a tile in a flow field.
-#[cfg_attr(feature = "dev", derive(bevy_inspector_egui::Inspectable))]
-#[derive(Component, Default, Debug, Clone, Deref, DerefMut)]
-pub struct Flow(pub IVec2);
-
 /// A flow field component. Stores the goal of the flow field & the time it was last updated.
-#[cfg_attr(feature = "dev", derive(bevy_inspector_egui::Inspectable))]
 #[derive(Component, Default, Debug)]
 pub struct FlowField {
     pub goal: Option<Coord>,
-    pub last_updated_tick: f64,
+    pub flow: Field<Option<Vec2>>,
+    pub integration: Field<Option<i32>>,
+}
+
+impl FlowField {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
+            goal: None,
+            flow: Field::new(width, height, vec![None; width * height]),
+            integration: Field::new(width, height, vec![None; width * height]),
+        }
+    }
+
+    pub fn get(&self, coord: &Coord) -> Option<Vec2> {
+        self.flow[coord]
+    }
+
+    pub fn set(&mut self, coord: &Coord, value: Option<Vec2>) {
+        self.flow[coord] = value;
+    }
+
+    pub fn clear(&mut self) {
+        self.flow.clear();
+        self.integration.clear();
+    }
 }
 
 /// Compute flow field event for a given goal.
@@ -57,137 +75,105 @@ pub struct ComputeFlowField {
 
 /// Consumes [ComputeFlowField] events and computes & updates the flow field for the given goal.
 fn compute_flowfield_system(
-    mut cmds: Commands,
     mut ev_compute: EventReader<ComputeFlowField>,
-    time: Res<Time>,
-    grids: Query<(Entity, &Grid), With<FlowField>>,
-    cells: Query<(Entity, &Cost, &Flow, &Parent, &Coord)>,
+    mut grids: Query<(&Grid, &mut FlowField)>,
+    costs: Query<&Cost>,
 ) {
-    for ((grid_entity, grid), ev) in
-        ev_compute
-            .iter()
-            .filter_map(|ev| match grids.get(ev.grid_entity) {
-                Ok(grid) => Some((grid, ev)),
-                Err(_) => None,
-            })
-    {
+    for ev in ev_compute.iter() {
         use std::time::Instant;
 
         let now = Instant::now();
         let goal = ev.goal;
 
-        log::info!("Compute for goal: {:?}", goal);
+        let (grid, mut flowfield) = grids
+            .get_mut(ev.grid_entity)
+            .expect("Grid entity not found");
 
-        let mut integration = Field::new(
-            grid.storage.size.w,
-            grid.storage.size.h,
-            vec![None; grid.storage.data.len()],
+        log::info!(
+            "Compute flowfield {:?} for goal: {:?}.",
+            ev.grid_entity,
+            goal
         );
+
+        if !grid.within_bounds(&ev.goal) {
+            log::error!(
+                "Goal {:?} is not within bounds of grid, aborting ...",
+                ev.goal
+            );
+            continue;
+        }
+
+        // Set the goal of the flow field.
+        flowfield.goal = Some(goal);
+
+        // Reset the integration field
+        flowfield.clear();
 
         // Compute the integration field.
         let mut queue = BinaryHeap::new();
-        let mut closed = HashSet::new();
+        const ZERO_COST: i32 = 0_i32;
+        const MAX_COST: i32 = i32::MAX;
 
-        queue.push(Reverse((0_i32, goal)));
+        // Add the goal to the queue with a cost of 0.
+        flowfield.integration[&goal] = Some(ZERO_COST);
+        queue.push(Reverse((ZERO_COST, goal)));
 
         while let Some(Reverse((cost, coord))) = queue.pop() {
-            if closed.contains(&coord) {
-                continue;
-            }
-
-            closed.insert(coord);
-
-            integration[&coord] = Some(cost);
-
-            for neighbor in grid.storage.neighbors8(&coord) {
-                if closed.contains(&neighbor) {
-                    continue;
-                }
-
-                let neighbor_entity = match grid.storage[&neighbor] {
+            for neighbor in grid.data.neighbors8(&coord) {
+                let neighbor_entity = match grid.data[&neighbor] {
                     Some(entity) => entity,
                     None => continue,
                 };
 
-                let neighbor_cost = match cells.get(neighbor_entity) {
-                    Ok((_, cost, _, _, _)) => cost,
+                let neighbor_cost = match costs.get(neighbor_entity) {
+                    Ok(cost) => cost,
                     Err(_) => continue,
                 };
 
+                // If the neighbor is not walkable, skip it.
                 if *neighbor_cost == Cost::MAX {
                     continue;
                 }
 
                 let cost = cost + neighbor_cost.0 as i32 + neighbor.distance(goal) as i32;
-                queue.push(Reverse((cost, neighbor)));
+
+                if cost < flowfield.integration[&neighbor].unwrap_or(MAX_COST) {
+                    flowfield.integration[&neighbor] = Some(cost);
+                    queue.push(Reverse((cost, neighbor)));
+                }
             }
         }
 
-        log::info!("Integration field computed in {:?}", now.elapsed());
-
         // Compute the flow field from the integration field.
-        for y in 0..grid.storage.size.w {
-            for x in 0..grid.storage.size.h {
-                let coord = Coord::new(x as i32, y as i32);
 
-                if integration[&coord].is_none() {
+        for y in 0..grid.data.size.width {
+            for x in 0..grid.data.size.height {
+                let coord = Coord::new(x as i32, y as i32);
+                if flowfield.integration[&coord].is_none() {
                     continue;
                 }
-
-                let entity = match grid.storage[&coord] {
-                    Some(entity) => entity,
-                    None => continue,
-                };
 
                 let mut min_cost = i32::MAX;
-                let mut min_coord = Coord::default();
+                let mut min_dir = Coord::default();
 
                 if coord == goal {
-                    cmds.entity(entity).insert(Flow(min_coord.into()));
+                    flowfield.set(&coord, Some(min_dir.into()));
                     continue;
                 }
 
-                for neighbor in integration.neighbors8(&coord) {
-                    if let Some(cost) = integration[&neighbor] {
+                for neighbor in flowfield.integration.neighbors8(&coord) {
+                    if let Some(cost) = flowfield.integration[&neighbor] {
                         if cost < min_cost {
                             min_cost = cost;
-                            min_coord = neighbor - coord;
+                            min_dir = neighbor - coord;
                         }
                     }
                 }
 
-                cmds.entity(entity).insert(Flow(min_coord.into()));
+                flowfield.set(&coord, Some(min_dir.into()));
             }
         }
 
-        cmds.entity(grid_entity).insert(FlowField {
-            goal: Some(goal),
-            last_updated_tick: time.seconds_since_startup(),
-        });
-
-        log::info!("Compute took: {:.2?}", now.elapsed());
+        log::info!("Compute took: {:.2?}.", now.elapsed());
     }
-}
-
-// Create a flow field
-pub fn create_flowfield(
-    cmds: &mut Commands,
-    width: usize,
-    height: usize,
-    cell_size: f32,
-    transform: &Transform,
-) -> Entity {
-    cmds.spawn_grid(
-        width,
-        height,
-        cell_size,
-        transform,
-        |cell| {
-            cell
-                .insert(Cost::default())
-                .insert(Flow::default());
-        },
-    )
-    .insert(FlowField::default())
-    .id()
 }

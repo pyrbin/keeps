@@ -1,6 +1,8 @@
 mod coord;
 mod field;
 
+
+
 use bevy::ecs::system::EntityCommands;
 
 pub use self::coord::*;
@@ -57,7 +59,7 @@ pub trait GridCommandsExt<'w, 's> {
         height: usize,
         cell_size: f32,
         transform: &Transform,
-        build_fn: fn(&mut EntityCommands<'_, '_, '_>),
+        build_fn: fn(&mut EntityCommands<'_, '_, '_>, Coord),
     ) -> EntityCommands<'w, 's, 'a>;
 }
 
@@ -68,18 +70,16 @@ impl<'w, 's> GridCommandsExt<'w, 's> for Commands<'w, 's> {
         height: usize,
         cell_size: f32,
         transform: &Transform,
-        child_build_fn: fn(&mut EntityCommands<'_, '_, '_>),
+        child_build_fn: fn(&mut EntityCommands<'_, '_, '_>, Coord),
     ) -> EntityCommands<'w, 's, 'a> {
         let mut grid = self.spawn();
-
         grid.insert_bundle(GridBundle::new(width, height, cell_size, &transform))
             .with_children(|parent| {
                 for coord in iter_coords(width, height) {
                     let mut child = parent.spawn_bundle(CellBundle::new(coord));
-                    child_build_fn(&mut child);
+                    child_build_fn(&mut child, coord);
                 }
             });
-
         grid
     }
 }
@@ -87,7 +87,7 @@ impl<'w, 's> GridCommandsExt<'w, 's> for Commands<'w, 's> {
 /// A 2d grid component with cache storage for entity lookups.
 #[derive(Component, Debug, Default, Clone)]
 pub struct Grid {
-    pub storage: Field<Option<Entity>>,
+    pub data: Field<Option<Entity>>,
     pub cell_size: f32,
 }
 
@@ -95,7 +95,7 @@ impl Grid {
     /// Creates a new grid with the given dimensions.
     pub fn new(width: usize, height: usize, cell_size: f32) -> Self {
         Self {
-            storage: Field::new(width, height, vec![default(); width * height]),
+            data: Field::new(width, height, vec![default(); width * height]),
             cell_size,
             ..default()
         }
@@ -123,7 +123,12 @@ impl Grid {
 
     /// Returns true if the given coordinate is within the grid dimensions.
     pub fn within_bounds(&self, local_coord: &Coord) -> bool {
-        self.storage.within_bounds(local_coord)
+        self.data.within_bounds(local_coord)
+    }
+
+    /// Returns the entity at the given coordinate.
+    pub fn get(&self, coord: &Coord) -> Option<Entity> {
+        self.data[coord]
     }
 }
 
@@ -160,7 +165,7 @@ fn maintain_grid_storage_system(
 ) {
     for (entity, parent, coord) in query.iter() {
         if let Ok(mut grid) = grids.get_mut(parent.get()) {
-            grid.storage[&coord] = Some(entity);
+            grid.data[&coord] = Some(entity);
         }
     }
 }

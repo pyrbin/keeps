@@ -10,11 +10,7 @@ pub struct DebugPlugin;
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(DebugLinesPlugin::with_depth_test(true));
-
-        #[cfg(debug_assertions)]
         app.add_plugin(WireframePlugin);
-
-        #[cfg(debug_assertions)]
         app.add_system_set(
             ConditionSet::new()
                 .run_in_state(AppState::InGame)
@@ -23,6 +19,9 @@ impl Plugin for DebugPlugin {
         );
     }
 }
+
+#[derive(Component, Default, Debug, Deref, DerefMut)]
+pub struct DebugColor(pub Color);
 
 fn debug_origin_axis(mut lines: ResMut<DebugLines>) {
     const AXIS_LENGTH: f32 = 50.0;
@@ -37,13 +36,13 @@ fn debug_origin_axis(mut lines: ResMut<DebugLines>) {
 }
 
 pub trait DebugLinesExt {
-    fn circle(&mut self, origin: Vec3, rot: Quat, radius: f32, duration: f32, color: Color);
+    fn circle(&mut self, origin: Vec3, radius: f32, duration: f32, color: Color);
     fn square(&mut self, origin: Vec3, size: f32, duration: f32, color: Color);
 }
 
 impl DebugLinesExt for DebugLines {
-    fn circle(&mut self, origin: Vec3, rot: Quat, radius: f32, duration: f32, color: Color) {
-        add_circle(self, origin, rot, radius, duration, color);
+    fn circle(&mut self, origin: Vec3, radius: f32, duration: f32, color: Color) {
+        add_circle(self, origin, radius, duration, color);
     }
     fn square(&mut self, origin: Vec3, size: f32, duration: f32, color: Color) {
         add_square(self, origin, size, duration, color);
@@ -62,17 +61,17 @@ fn add_square(lines: &mut DebugLines, origin: Vec3, size: f32, duration: f32, co
     lines.line_colored(p4, p1, duration, color);
 }
 
-fn add_circle(
-    lines: &mut DebugLines,
-    origin: Vec3,
-    rot: Quat,
-    radius: f32,
-    duration: f32,
-    color: Color,
-) {
+fn add_circle(lines: &mut DebugLines, origin: Vec3, radius: f32, duration: f32, color: Color) {
     let x_rotate = Quat::from_rotation_x(PI);
-    add_semicircle(lines, origin, rot, radius, duration, color);
-    add_semicircle(lines, origin, rot * x_rotate, radius, duration, color);
+    add_semicircle(lines, origin, Quat::IDENTITY, radius, duration, color);
+    add_semicircle(
+        lines,
+        origin,
+        Quat::IDENTITY * x_rotate,
+        radius,
+        duration,
+        color,
+    );
 }
 
 fn add_semicircle(
