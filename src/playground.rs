@@ -180,8 +180,11 @@ fn setup_playground(
 
     let unit = cmds
         .spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.5 })),
-            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+            mesh: meshes.add(Mesh::from(shape::Icosphere {
+                radius: 0.1,
+                subdivisions: 3,
+            })),
+            material: materials.add(Color::YELLOW.into()),
             transform: Transform::from_xyz(5.0, 0.25, 5.0),
             ..default()
         })
@@ -190,9 +193,7 @@ fn setup_playground(
         .insert(Name::new("Unit"))
         .insert(DebugColor(Color::RED))
         .insert(MoveDirection::default())
-        .insert(Agent {
-            flowfield: flowfield,
-        })
+        .insert(Agent { flowfield })
         .id();
 
     log::info!("Unit spawned {:?}.", unit);
