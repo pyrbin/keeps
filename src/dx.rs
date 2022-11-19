@@ -7,7 +7,6 @@ pub struct DiagnosticsPlugin;
 impl Plugin for DiagnosticsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(EguiPlugin)
-            .add_plugin(bevy::diagnostic::DiagnosticsPlugin)
             .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin)
             .add_system(egui_display_diagnostics)
             .add_plugin(WorldInspectorPlugin::new());

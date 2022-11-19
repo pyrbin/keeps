@@ -1,8 +1,6 @@
 mod coord;
 mod field;
 
-
-
 use bevy::ecs::system::EntityCommands;
 
 pub use self::coord::*;
@@ -72,15 +70,17 @@ impl<'w, 's> GridCommandsExt<'w, 's> for Commands<'w, 's> {
         transform: &Transform,
         child_build_fn: fn(&mut EntityCommands<'_, '_, '_>, Coord),
     ) -> EntityCommands<'w, 's, 'a> {
-        let mut grid = self.spawn();
-        grid.insert_bundle(GridBundle::new(width, height, cell_size, &transform))
+        let entity = self
+            .spawn(GridBundle::new(width, height, cell_size, &transform))
             .with_children(|parent| {
                 for coord in iter_coords(width, height) {
-                    let mut child = parent.spawn_bundle(CellBundle::new(coord));
+                    let mut child = parent.spawn(CellBundle::new(coord));
                     child_build_fn(&mut child, coord);
                 }
-            });
-        grid
+            })
+            .id();
+
+        self.entity(entity)
     }
 }
 

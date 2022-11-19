@@ -23,9 +23,11 @@ pub use prelude::*;
 
 pub fn setup_app(app: &mut App) -> &mut App {
     app.add_plugin(WindowPlugin);
-    app.add_plugins_with(DefaultPlugins, |group| {
-        group.add_before::<bevy::asset::AssetPlugin, _>(EmbeddedAssetPlugin)
-    });
+    app.add_plugins(
+        DefaultPlugins
+            .build()
+            .add_before::<AssetPlugin, EmbeddedAssetPlugin>(EmbeddedAssetPlugin),
+    );
 
     #[cfg(feature = "dev")]
     {
@@ -42,7 +44,6 @@ pub fn setup_app(app: &mut App) -> &mut App {
     app.add_plugin(GridPlugin);
     app.add_plugin(PathfindingPlugin);
     app.add_plugin(UnitPlugin);
-
     app.add_plugin(PlaygroundPlugin);
     app
 }

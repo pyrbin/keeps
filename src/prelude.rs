@@ -1,8 +1,6 @@
 pub use bevy::log;
 pub use bevy::math::*;
 pub use bevy::prelude::*;
-pub use bevy::render::texture::ImageSettings;
-pub use bevy::winit::WinitSettings;
 #[cfg(feature = "dev")]
 pub use bevy_egui::*;
 #[cfg(feature = "dev")]

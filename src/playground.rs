@@ -22,7 +22,7 @@ impl Plugin for PlaygroundPlugin {
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Resource, Default, Debug, Clone)]
 pub struct MousePosition(pub Option<Vec3>);
 
 fn update_mouse_hover_coord(
@@ -87,7 +87,7 @@ fn debug_mouse_position(mut lines: ResMut<DebugLines>, mouse_position: Res<Mouse
 #[derive(Component, Default)]
 pub struct UnitFlowFieldGrid;
 
-#[derive(Default)]
+#[derive(Resource, Default)]
 pub struct PaintData {
     pub block: bool,
     pub is_painting: bool,
@@ -165,10 +165,12 @@ fn setup_playground(
                     .insert(Name::new(format!("Cell {:} {:}", coord.x, coord.y)));
             },
         )
-        .insert(FlowField::new(width, height))
-        .insert(UnitFlowFieldGrid)
-        .insert(Name::new("FlowField"))
-        .insert(DebugColor(Color::BEIGE))
+        .insert((
+            FlowField::new(width, height),
+            UnitFlowFieldGrid,
+            Name::new("FlowField"),
+            DebugColor(Color::BEIGE),
+        ))
         .id();
 
     log::info!("Flowfield grid spawned {:?}.", flowfield);
@@ -179,21 +181,23 @@ fn setup_playground(
     });
 
     let unit = cmds
-        .spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Icosphere {
-                radius: 0.1,
-                subdivisions: 3,
-            })),
-            material: materials.add(Color::YELLOW.into()),
-            transform: Transform::from_xyz(5.0, 0.25, 5.0),
-            ..default()
-        })
-        .insert(Unit)
-        .insert(MovementSpeed(0.01))
-        .insert(Name::new("Unit"))
-        .insert(DebugColor(Color::RED))
-        .insert(MoveDirection::default())
-        .insert(Agent { flowfield })
+        .spawn((
+            PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::Icosphere {
+                    radius: 0.1,
+                    subdivisions: 3,
+                })),
+                material: materials.add(Color::YELLOW.into()),
+                transform: Transform::from_xyz(5.0, 0.25, 5.0),
+                ..default()
+            },
+            Unit,
+            MovementSpeed(0.01),
+            Name::new("Unit"),
+            DebugColor(Color::RED),
+            MoveDirection::default(),
+            Agent { flowfield },
+        ))
         .id();
 
     log::info!("Unit spawned {:?}.", unit);
