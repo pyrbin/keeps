@@ -7,6 +7,7 @@ pub struct PathfindingPlugin;
 impl Plugin for PathfindingPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(FlowFieldPlugin);
+        app.add_system_set(ConditionSet::new().run_in_state(AppState::InGame).into());
         #[cfg(feature = "dev")]
         app.add_system_set(
             ConditionSet::new()
@@ -37,7 +38,7 @@ fn debug_grid(
         };
 
         let translation = grid.coord_to_world(&coord, grid_transform);
-        lines.square(translation, grid.cell_size, 0., color);
+        lines.circle(translation, grid.cell_size / 2.0, 0., color);
     }
 }
 
@@ -51,9 +52,8 @@ fn debug_flowfield_grid(
         let (grid, grid_transform, flowfield) = grids.get(parent.get()).unwrap();
         let start = grid.coord_to_world(&coord, grid_transform);
         if let Some(dir) = flowfield.get(&coord) {
-            let end = start + Vec3::new(dir.x as f32, 0.0, dir.y as f32) * 0.35 * grid.cell_size;
+            let end = start + dir.pos_3d() * grid.cell_size * 0.5;
             lines.line_colored(start, end, 0.0, Color::BEIGE);
-            lines.square(end, 0.085 * grid.cell_size, 0.0, Color::BEIGE);
         }
     }
 }

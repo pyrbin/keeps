@@ -29,11 +29,16 @@ bevy_asset_loader = { version = "0.13", features = ["stageless"] }
 bevy_embedded_assets = "0.6.1"
 bevy_mod_check_filter = "0.3.0"
 iyes_loopless = "0.9.0"
-bevy_spatial = { version = "0.4.0", features = ["kdtree"] }
+bevy_spatial = { version = "0.4.0", features = ["rstar"] }
 bevy_egui = { version = "0.17.1", optional = true }
 bevy-inspector-egui = { version = "0.14.0", optional = true }
 bevy_prototype_debug_lines = { version = "0.9", features = ["3d"] }
-
+smooth-bevy-cameras = { git = "https://github.com/bonsairobo/smooth-bevy-cameras" }
+bevy_rapier3d = { version = "0.19.0", features = [
+    "simd-stable",
+    "debug-render",
+    "parallel",
+] }
 rand = "0.8.5"
 
 # Keep the following in sync with Bevy's dependencies

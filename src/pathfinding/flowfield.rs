@@ -9,9 +9,7 @@ impl Plugin for FlowFieldPlugin {
         app.add_event::<ComputeFlowField>();
         app.add_system_set_to_stage(
             CoreStage::PreUpdate,
-            ConditionSet::new()
-                .with_system(compute_flowfield_system)
-                .into(),
+            ConditionSet::new().with_system(compute_flowfield).into(),
         );
     }
 }
@@ -50,11 +48,17 @@ impl FlowField {
     }
 
     pub fn get(&self, coord: &Coord) -> Option<Vec2> {
-        self.flow[coord]
+        if self.flow.within_bounds(coord) {
+            self.flow[coord]
+        } else {
+            None
+        }
     }
 
     pub fn set(&mut self, coord: &Coord, value: Option<Vec2>) {
-        self.flow[coord] = value;
+        if self.flow.within_bounds(coord) {
+            self.flow[coord] = value;
+        }
     }
 
     pub fn clear(&mut self) {
@@ -71,7 +75,7 @@ pub struct ComputeFlowField {
 }
 
 /// Consumes [ComputeFlowField] events and computes & updates the flow field for the given goal.
-fn compute_flowfield_system(
+fn compute_flowfield(
     mut ev_compute: EventReader<ComputeFlowField>,
     mut grids: Query<(&Grid, &mut FlowField)>,
     costs: Query<&Cost>,
@@ -108,6 +112,7 @@ fn compute_flowfield_system(
 
         // Compute the integration field.
         let mut queue = BinaryHeap::new();
+
         const ZERO_COST: i32 = 0_i32;
         const MAX_COST: i32 = i32::MAX;
 
@@ -126,11 +131,6 @@ fn compute_flowfield_system(
                     Ok(cost) => cost,
                     Err(_) => continue,
                 };
-
-                // If the neighbor is not walkable, skip it.
-                if *neighbor_cost == Cost::MAX {
-                    continue;
-                }
 
                 let cost = cost + neighbor_cost.0 as i32 + neighbor.distance(goal) as i32;
 

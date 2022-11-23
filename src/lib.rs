@@ -38,6 +38,8 @@ pub fn setup_app(app: &mut App) -> &mut App {
     }
 
     app.add_loopless_state(AppState::AssetLoading);
+    app.add_plugin(RapierPhysicsPlugin::<NoUserData>::default());
+    app.add_plugin(RapierDebugRenderPlugin::default());
     app.add_plugin(AssetsPlugin::continue_to(AppState::InGame));
     app.add_plugin(DebugPlugin);
     app.add_plugin(CameraPlugin);
